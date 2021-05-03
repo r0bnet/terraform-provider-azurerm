@@ -18,6 +18,8 @@ type Client struct {
 	FirewallRulesClient                                *sql.FirewallRulesClient
 	JobAgentsClient                                    *sql.JobAgentsClient
 	JobTargetGroupsClient                              *sql.JobTargetGroupsClient
+	JobCredentialsClient                               *sql.JobCredentialsClient
+	ReplicationLinksClient                             *sql.ReplicationLinksClient
 	RestorableDroppedDatabasesClient                   *sql.RestorableDroppedDatabasesClient
 	ServerAzureADAdministratorsClient                  *sql.ServerAzureADAdministratorsClient
 	ServerConnectionPoliciesClient                     *sql.ServerConnectionPoliciesClient
@@ -28,6 +30,8 @@ type Client struct {
 	VirtualMachinesClient                              *sqlvirtualmachine.SQLVirtualMachinesClient
 	VirtualNetworkRulesClient                          *sql.VirtualNetworkRulesClient
 	GeoBackupPoliciesClient                            *sql.GeoBackupPoliciesClient
+	EncryptionProtectorClient                          *sql.EncryptionProtectorsClient
+	ServerKeysClient                                   *sql.ServerKeysClient
 }
 
 func NewClient(o *common.ClientOptions) *Client {
@@ -55,11 +59,17 @@ func NewClient(o *common.ClientOptions) *Client {
 	jobAgentsClient := sql.NewJobAgentsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&jobAgentsClient.Client, o.ResourceManagerAuthorizer)
 
+	jobCredentialsClient := sql.NewJobCredentialsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&jobCredentialsClient.Client, o.ResourceManagerAuthorizer)
+
 	jobTargetGroupsClient := sql.NewJobTargetGroupsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&jobTargetGroupsClient.Client, o.ResourceManagerAuthorizer)
 
 	firewallRulesClient := sql.NewFirewallRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&firewallRulesClient.Client, o.ResourceManagerAuthorizer)
+
+	replicationLinksClient := sql.NewReplicationLinksClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&replicationLinksClient.Client, o.ResourceManagerAuthorizer)
 
 	restorableDroppedDatabasesClient := sql.NewRestorableDroppedDatabasesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&restorableDroppedDatabasesClient.Client, o.ResourceManagerAuthorizer)
@@ -87,8 +97,15 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	sqlVirtualNetworkRulesClient := sql.NewVirtualNetworkRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&sqlVirtualNetworkRulesClient.Client, o.ResourceManagerAuthorizer)
+
 	geoBackupPoliciesClient := sql.NewGeoBackupPoliciesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&geoBackupPoliciesClient.Client, o.ResourceManagerAuthorizer)
+
+	sqlEncryptionProtectorClient := sql.NewEncryptionProtectorsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&sqlEncryptionProtectorClient.Client, o.ResourceManagerAuthorizer)
+
+	sqlServerKeysClient := sql.NewServerKeysClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&sqlServerKeysClient.Client, o.ResourceManagerAuthorizer)
 
 	return &Client{
 		BackupLongTermRetentionPoliciesClient:              &BackupLongTermRetentionPoliciesClient,
@@ -97,10 +114,13 @@ func NewClient(o *common.ClientOptions) *Client {
 		DatabaseExtendedBlobAuditingPoliciesClient:         &databaseExtendedBlobAuditingPoliciesClient,
 		DatabaseThreatDetectionPoliciesClient:              &databaseThreatDetectionPoliciesClient,
 		DatabaseVulnerabilityAssessmentRuleBaselinesClient: &databaseVulnerabilityAssessmentRuleBaselinesClient,
+		EncryptionProtectorClient:                          &sqlEncryptionProtectorClient,
 		ElasticPoolsClient:                                 &elasticPoolsClient,
 		JobAgentsClient:                                    &jobAgentsClient,
+		JobCredentialsClient:                               &jobCredentialsClient,
 		JobTargetGroupsClient:                              &jobTargetGroupsClient,
 		FirewallRulesClient:                                &firewallRulesClient,
+		ReplicationLinksClient:                             &replicationLinksClient,
 		RestorableDroppedDatabasesClient:                   &restorableDroppedDatabasesClient,
 		ServerAzureADAdministratorsClient:                  &serverAzureADAdministratorsClient,
 		ServersClient:                                      &serversClient,
@@ -111,5 +131,6 @@ func NewClient(o *common.ClientOptions) *Client {
 		VirtualMachinesClient:                              &sqlVirtualMachinesClient,
 		VirtualNetworkRulesClient:                          &sqlVirtualNetworkRulesClient,
 		GeoBackupPoliciesClient:                            &geoBackupPoliciesClient,
+		ServerKeysClient:                                   &sqlServerKeysClient,
 	}
 }
