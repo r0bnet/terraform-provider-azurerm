@@ -1,7 +1,6 @@
 package mssql
 
 import (
-	"bytes"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
 	"log"
@@ -58,13 +57,13 @@ func resourceMsSqlJobTargetGroup() *schema.Resource {
 					Schema: map[string]*schema.Schema{
 						"type": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 							ValidateFunc: validation.StringInSlice(
 								[]string{
-									"Server",
-									"Database",
-									"ElasticPool",
-									"ShardMap",
+									string(sql.JobTargetTypeSQLServer),
+									string(sql.JobTargetTypeSQLDatabase),
+									string(sql.JobTargetTypeSQLElasticPool),
+									string(sql.JobTargetTypeSQLShardMap),
 								},
 								false,
 							),
@@ -93,9 +92,10 @@ func resourceMsSqlJobTargetGroup() *schema.Resource {
 							Optional: true,
 						},
 
-						"refresh_credential_name": {
-							Type:     schema.TypeString,
-							Optional: true,
+						"refresh_credential_id": {
+							Type:         schema.TypeString,
+							Optional:     true,
+							ValidateFunc: validate.JobCredentialID,
 						},
 
 						"exclude": {
@@ -105,7 +105,6 @@ func resourceMsSqlJobTargetGroup() *schema.Resource {
 						},
 					},
 				},
-				Set: hashMsSqlJobTargetGroupTarget,
 			},
 		},
 	}
@@ -210,29 +209,13 @@ func expandMssqlJobTargetGroupTargets(d *schema.ResourceData) (*[]sql.JobTarget,
 		target := t.(map[string]interface{})
 
 		jt := sql.JobTarget{
+			Type:           sql.JobTargetType(target["type"].(string)),
 			MembershipType: sql.Include,
 		}
 
 		exclude := target["exclude"].(bool)
 		if exclude {
 			jt.MembershipType = sql.Exclude
-		}
-
-		if targetType, ok := target["type"]; ok {
-			switch targetType {
-			case "Server":
-				jt.Type = sql.JobTargetTypeSQLServer
-				break
-			case "Database":
-				jt.Type = sql.JobTargetTypeSQLDatabase
-				break
-			case "ElasticPool":
-				jt.Type = sql.JobTargetTypeSQLElasticPool
-				break
-			case "ShardMap":
-				jt.Type = sql.JobTargetTypeSQLShardMap
-				break
-			}
 		}
 
 		if serverName, serverOk := target["server_name"]; serverOk && serverName != "" {
@@ -251,8 +234,8 @@ func expandMssqlJobTargetGroupTargets(d *schema.ResourceData) (*[]sql.JobTarget,
 			jt.ShardMapName = utils.String(smName.(string))
 		}
 
-		if rcName, rcOk := target["refresh_credential_name"]; rcOk && rcName != "" {
-			jt.RefreshCredential = utils.String(rcName.(string))
+		if rcId, rcOk := target["refresh_credential_id"]; rcOk && rcId != "" {
+			jt.RefreshCredential = utils.String(rcId.(string))
 		}
 
 		result = append(result, jt)
@@ -261,29 +244,17 @@ func expandMssqlJobTargetGroupTargets(d *schema.ResourceData) (*[]sql.JobTarget,
 	return &result, nil
 }
 
-func flattenMssqlJobTargetGroupTargets(targets *[]sql.JobTarget) *schema.Set {
+func flattenMssqlJobTargetGroupTargets(targets *[]sql.JobTarget) []interface{} {
+	result := make([]interface{}, 0)
+
 	if targets == nil {
-		return schema.NewSet(schema.HashString, make([]interface{}, 0))
+		return result
 	}
 
-	result := make([]interface{}, 0)
 	for _, target := range *targets {
 		t := make(map[string]interface{})
 
-		switch target.Type {
-		case sql.JobTargetTypeSQLServer:
-			t["type"] = "Server"
-			break
-		case sql.JobTargetTypeSQLDatabase:
-			t["type"] = "Database"
-			break
-		case sql.JobTargetTypeSQLElasticPool:
-			t["type"] = "ElasticPool"
-			break
-		case sql.JobTargetTypeSQLShardMap:
-			t["type"] = "ShardMap"
-			break
-		}
+		t["type"] = string(target.Type)
 
 		if target.ServerName != nil {
 			t["server_name"] = *target.ServerName
@@ -302,7 +273,7 @@ func flattenMssqlJobTargetGroupTargets(targets *[]sql.JobTarget) *schema.Set {
 		}
 
 		if target.RefreshCredential != nil {
-			t["refresh_credential_name"] = *target.RefreshCredential
+			t["refresh_credential_id"] = *target.RefreshCredential
 		}
 
 		if target.MembershipType == sql.Include {
@@ -314,35 +285,5 @@ func flattenMssqlJobTargetGroupTargets(targets *[]sql.JobTarget) *schema.Set {
 		result = append(result, t)
 	}
 
-	return schema.NewSet(hashMsSqlJobTargetGroupTarget, result)
-}
-
-func hashMsSqlJobTargetGroupTarget(v interface{}) int {
-	var buf bytes.Buffer
-	m := v.(map[string]interface{})
-
-	buf.WriteString(fmt.Sprintf("%s-", m["type"].(string)))
-	buf.WriteString(fmt.Sprintf("%s-", m["server_name"].(string)))
-
-	if val, ok := m["database_name"]; ok {
-		buf.WriteString(fmt.Sprintf("%s-", val.(string)))
-	}
-
-	if val, ok := m["elastic_pool_name"]; ok {
-		buf.WriteString(fmt.Sprintf("%s-", val.(string)))
-	}
-
-	if val, ok := m["shard_map"]; ok {
-		buf.WriteString(fmt.Sprintf("%s-", val.(string)))
-	}
-
-	if val, ok := m["refresh_credential_name"]; ok {
-		buf.WriteString(fmt.Sprintf("%s-", val.(string)))
-	}
-
-	if val, ok := m["exclude"]; ok {
-		buf.WriteString(fmt.Sprintf("%t", val.(bool)))
-	}
-
-	return schema.HashString(buf.String())
+	return result
 }
