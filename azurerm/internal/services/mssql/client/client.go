@@ -17,6 +17,7 @@ type Client struct {
 	ElasticPoolsClient                                 *sql.ElasticPoolsClient
 	FirewallRulesClient                                *sql.FirewallRulesClient
 	JobAgentsClient                                    *sql.JobAgentsClient
+	JobTargetGroupsClient                              *sql.JobTargetGroupsClient
 	RestorableDroppedDatabasesClient                   *sql.RestorableDroppedDatabasesClient
 	ServerAzureADAdministratorsClient                  *sql.ServerAzureADAdministratorsClient
 	ServerConnectionPoliciesClient                     *sql.ServerConnectionPoliciesClient
@@ -53,6 +54,9 @@ func NewClient(o *common.ClientOptions) *Client {
 
 	jobAgentsClient := sql.NewJobAgentsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&jobAgentsClient.Client, o.ResourceManagerAuthorizer)
+
+	jobTargetGroupsClient := sql.NewJobTargetGroupsClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
+	o.ConfigureClient(&jobTargetGroupsClient.Client, o.ResourceManagerAuthorizer)
 
 	firewallRulesClient := sql.NewFirewallRulesClientWithBaseURI(o.ResourceManagerEndpoint, o.SubscriptionId)
 	o.ConfigureClient(&firewallRulesClient.Client, o.ResourceManagerAuthorizer)
@@ -95,6 +99,7 @@ func NewClient(o *common.ClientOptions) *Client {
 		DatabaseVulnerabilityAssessmentRuleBaselinesClient: &databaseVulnerabilityAssessmentRuleBaselinesClient,
 		ElasticPoolsClient:                                 &elasticPoolsClient,
 		JobAgentsClient:                                    &jobAgentsClient,
+		JobTargetGroupsClient:                              &jobTargetGroupsClient,
 		FirewallRulesClient:                                &firewallRulesClient,
 		RestorableDroppedDatabasesClient:                   &restorableDroppedDatabasesClient,
 		ServerAzureADAdministratorsClient:                  &serverAzureADAdministratorsClient,
